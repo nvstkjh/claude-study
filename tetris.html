@@ -51,6 +51,16 @@
     display: block;
     margin: 0 auto;
   }
+  #lives-display {
+    font-size: 20px;
+    letter-spacing: 4px;
+  }
+  @keyframes flash {
+    0%   { box-shadow: 0 0 0 4px #e94560; }
+    50%  { box-shadow: 0 0 40px 10px #e94560; }
+    100% { box-shadow: 0 0 20px #e9456066; }
+  }
+  .flash { animation: flash 0.5s ease-out; }
   #keys {
     font-size: 11px;
     line-height: 2;
@@ -100,6 +110,10 @@
       <p id="lines">0</p>
     </div>
     <div class="box">
+      <h3>목숨</h3>
+      <p id="lives-display">❤️❤️❤️</p>
+    </div>
+    <div class="box">
       <h3>다음</h3>
       <canvas id="nextCanvas" width="120" height="120"></canvas>
     </div>
@@ -147,7 +161,8 @@ const ctx = boardCanvas.getContext('2d');
 const nextCanvas = document.getElementById('nextCanvas');
 const nCtx = nextCanvas.getContext('2d');
 
-let board, piece, nextPiece, score, level, lines, gameLoop, paused, gameOver;
+let board, piece, nextPiece, score, level, lines, lives, gameLoop, paused, gameOver;
+const MAX_LIVES = 3;
 
 function newBoard() {
   return Array.from({length: ROWS}, () => Array(COLS).fill(0));
@@ -246,7 +261,31 @@ function lock() {
   clearLines();
   piece = nextPiece;
   nextPiece = randomPiece();
-  if (collide(piece.shape, piece.x, piece.y)) endGame();
+  if (collide(piece.shape, piece.x, piece.y)) loseLife();
+}
+
+function updateLivesDisplay() {
+  document.getElementById('lives-display').textContent = '❤️'.repeat(lives) + '🖤'.repeat(MAX_LIVES - lives);
+}
+
+function loseLife() {
+  lives--;
+  updateLivesDisplay();
+  if (lives <= 0) {
+    endGame();
+    return;
+  }
+  clearInterval(gameLoop);
+  boardCanvas.classList.add('flash');
+  boardCanvas.addEventListener('animationend', () => {
+    boardCanvas.classList.remove('flash');
+  }, { once: true });
+  board = newBoard();
+  piece = randomPiece();
+  nextPiece = randomPiece();
+  resetLoop();
+  drawBoard();
+  drawNext();
 }
 
 const LINE_SCORES = [0, 100, 300, 500, 800];
@@ -304,10 +343,11 @@ function resetLoop() {
 
 function startGame() {
   board = newBoard();
-  score = 0; level = 1; lines = 0; paused = false; gameOver = false;
+  score = 0; level = 1; lines = 0; lives = MAX_LIVES; paused = false; gameOver = false;
   document.getElementById('score').textContent = 0;
   document.getElementById('level').textContent = 1;
   document.getElementById('lines').textContent = 0;
+  updateLivesDisplay();
   piece = randomPiece();
   nextPiece = randomPiece();
   document.getElementById('overlay').style.display = 'none';
@@ -320,7 +360,7 @@ function endGame() {
   clearInterval(gameLoop);
   gameOver = true;
   const ov = document.getElementById('overlay');
-  ov.innerHTML = `<h1>게임 오버</h1><p>점수: ${score}</p><button id="startBtn">다시 시작</button>`;
+  ov.innerHTML = `<h1>게임 오버</h1><p>점수: ${score} &nbsp;|&nbsp; 레벨: ${level}</p><button id="startBtn">다시 시작</button>`;
   ov.style.display = 'flex';
   document.getElementById('startBtn').addEventListener('click', startGame);
 }
