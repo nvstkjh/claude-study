@@ -316,6 +316,7 @@ function moveDown() {
     piece.y++;
   } else {
     lock();
+    if (gameOver) return;
   }
   drawBoard();
   drawNext();
@@ -328,6 +329,7 @@ function hardDrop() {
   }
   document.getElementById('score').textContent = score;
   lock();
+  if (gameOver) return;
   drawBoard();
   drawNext();
 }
@@ -362,7 +364,7 @@ function endGame() {
   const ov = document.getElementById('overlay');
   ov.innerHTML = `<h1>게임 오버</h1><p>점수: ${score} &nbsp;|&nbsp; 레벨: ${level}</p><button id="startBtn">다시 시작</button>`;
   ov.style.display = 'flex';
-  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('startBtn').addEventListener('click', startGame, { once: true });
 }
 
 document.addEventListener('keydown', e => {
@@ -386,9 +388,11 @@ document.addEventListener('keydown', e => {
       break;
     case 'ArrowUp': {
       const r = rotate(piece.shape);
-      if (!collide(r, piece.x, piece.y)) { piece.shape = r; drawBoard(); }
-      else if (!collide(r, piece.x - 1, piece.y)) { piece.shape = r; piece.x--; drawBoard(); }
-      else if (!collide(r, piece.x + 1, piece.y)) { piece.shape = r; piece.x++; drawBoard(); }
+      for (const dx of [0, -1, 1, -2, 2]) {
+        if (!collide(r, piece.x + dx, piece.y)) {
+          piece.shape = r; piece.x += dx; drawBoard(); break;
+        }
+      }
       break;
     }
     case ' ':
