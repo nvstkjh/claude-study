@@ -230,7 +230,7 @@ function drawNext() {
 }
 
 function getGhost() {
-  const g = { shape: piece.shape, x: piece.x, y: piece.y };
+  const g = { shape: piece.shape.map(r => [...r]), x: piece.x, y: piece.y };
   while (!collide(g.shape, g.x, g.y + 1)) g.y++;
   return g;
 }
@@ -368,7 +368,7 @@ function endGame() {
 }
 
 document.addEventListener('keydown', e => {
-  if (gameOver) return;
+  if (!piece || gameOver) return;
   if (e.key === 'p' || e.key === 'P') {
     paused = !paused;
     if (paused) clearInterval(gameLoop);
@@ -402,7 +402,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('startBtn').addEventListener('click', startGame, { once: true });
 </script>
 </body>
 </html>
